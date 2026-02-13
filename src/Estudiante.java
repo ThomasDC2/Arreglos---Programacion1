@@ -5,21 +5,32 @@ public class Estudiante {
 
     public static void main(String[] args) {
 
-        int cantidadNotas = Integer.parseInt(
-                JOptionPane.showInputDialog(null,
-                        "Ingrese número de notas:")
+        // Total de notas del curso
+        int totalNotas = Integer.parseInt(
+                JOptionPane.showInputDialog("¿Cuántas notas tiene el curso en total?")
         );
 
-        double[] notas = new double[cantidadNotas];
+        // Notas que ya se han realizado
+        int notasRealizadas = Integer.parseInt(
+                JOptionPane.showInputDialog("¿Cuántas notas ha obtenido hasta ahora?")
+        );
 
-        // Llenar notas
-        for (int i = 0; i < cantidadNotas; i++) {
+        if (notasRealizadas > totalNotas) {
+            JOptionPane.showMessageDialog(null,
+                    "Error: No puede haber más notas realizadas que el total.");
+            return;
+        }
+
+        double[] notas = new double[notasRealizadas];
+
+        // Ingresar notas realizadas
+        for (int i = 0; i < notasRealizadas; i++) {
 
             double nota;
 
             do {
                 nota = Double.parseDouble(
-                        JOptionPane.showInputDialog(null,
+                        JOptionPane.showInputDialog(
                                 "Ingrese la nota " + (i + 1) + " (0.0 - 5.0):")
                 );
 
@@ -33,37 +44,41 @@ public class Estudiante {
             notas[i] = nota;
         }
 
-        // Menú principal
         int opcion;
 
         do {
             opcion = Integer.parseInt(
-                    JOptionPane.showInputDialog(null,
+                    JOptionPane.showInputDialog(
                             "----- MENÚ -----\n\n"
-                                    + "1. Ordenar notas\n"
+                                    + "1. Ordenar notas (Burbuja)\n"
                                     + "2. Mostrar resumen\n"
                                     + "3. Calcular nota necesaria para aprobar\n"
-                                    + "4. Salir\n\n"
+                                    + "4. Contar notas aprobadas y reprobadas\n"
+                                    + "5. Salir\n\n"
                                     + "Seleccione una opción:")
             );
 
             switch (opcion) {
 
                 case 1:
-                    Arrays.sort(notas);
+                    ordenarBurbuja(notas);
                     JOptionPane.showMessageDialog(null,
                             "Notas ordenadas:\n" + Arrays.toString(notas));
                     break;
 
                 case 2:
-                    mostrarResumen(notas);
+                    mostrarResumen(notas, totalNotas);
                     break;
 
                 case 3:
-                    calcularNotaNecesaria(notas);
+                    calcularNotaNecesaria(notas, totalNotas);
                     break;
 
                 case 4:
+                    contarAprobadas(notas);
+                    break;
+
+                case 5:
                     JOptionPane.showMessageDialog(null,
                             "Programa finalizado.");
                     break;
@@ -73,10 +88,33 @@ public class Estudiante {
                             "Opción inválida.");
             }
 
-        } while (opcion != 4);
+        } while (opcion != 5);
     }
 
-    public static void mostrarResumen(double[] notas) {
+    // Ordenamiento Burbuja
+    public static void ordenarBurbuja(double[] notas) {
+
+        for (int i = 0; i < notas.length - 1; i++) {
+            for (int j = 0; j < notas.length - 1 - i; j++) {
+
+                if (notas[j] > notas[j + 1]) {
+
+                    double temp = notas[j];
+                    notas[j] = notas[j + 1];
+                    notas[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    // Mostrar resumen
+    public static void mostrarResumen(double[] notas, int totalNotas) {
+
+        if (notas.length == 0) {
+            JOptionPane.showMessageDialog(null,
+                    "No hay notas registradas.");
+            return;
+        }
 
         double mayor = notas[0];
         double menor = notas[0];
@@ -95,45 +133,78 @@ public class Estudiante {
             suma += notas[i];
         }
 
-        double promedio = suma / notas.length;
+        double promedioActual = suma / totalNotas;
 
         String mensaje = "----- RESUMEN -----\n\n";
-        mensaje += "Notas: " + Arrays.toString(notas) + "\n";
+        mensaje += "Notas registradas: " + Arrays.toString(notas) + "\n";
         mensaje += "Nota mayor: " + mayor + "\n";
         mensaje += "Nota menor: " + menor + "\n";
-        mensaje += "Promedio: " + promedio + "\n";
+        mensaje += "Promedio actual (sobre total del curso): "
+                + String.format("%.2f", promedioActual) + "\n";
 
-        if (promedio >= 3.0) {
-            mensaje += "Estado: APROBADO";
+        if (promedioActual >= 3.0) {
+            mensaje += "Estado actual: APROBANDO";
         } else {
-            mensaje += "Estado: REPROBADO";
+            mensaje += "Estado actual: REPROBANDO";
         }
 
         JOptionPane.showMessageDialog(null, mensaje);
     }
 
-    public static void calcularNotaNecesaria(double[] notas) {
+    // Calcular nota necesaria
+    public static void calcularNotaNecesaria(double[] notas, int totalNotas) {
 
         double suma = 0;
 
-        for (int i = 0; i < notas.length - 1; i++) {
+        for (int i = 0; i < notas.length; i++) {
             suma += notas[i];
         }
 
-        double notaNecesaria = (3.0 * notas.length) - suma;
+        int notasFaltantes = totalNotas - notas.length;
+
+        if (notasFaltantes == 0) {
+            JOptionPane.showMessageDialog(null,
+                    "Ya tiene todas las notas registradas.");
+            return;
+        }
+
+        double notaObjetivo = 3.0 * totalNotas;
+        double puntosFaltantes = notaObjetivo - suma;
+
+        double notaNecesaria = puntosFaltantes / notasFaltantes;
 
         if (notaNecesaria <= 0) {
             JOptionPane.showMessageDialog(null,
-                    "Ya aprueba incluso con 0.0 en la última nota.");
+                    "Ya aprueba aunque saque 0.0 en las notas restantes.");
         } else if (notaNecesaria > 5.0) {
             JOptionPane.showMessageDialog(null,
-                    "Necesita " + notaNecesaria
-                            + " pero supera 5.0.\nNo es posible aprobar.");
+                    "Necesita " + String.format("%.2f", notaNecesaria)
+                            + " en cada nota faltante.\nNo es posible aprobar.");
         } else {
             JOptionPane.showMessageDialog(null,
-                    "Necesita sacar mínimo "
+                    "Debe sacar mínimo "
                             + String.format("%.2f", notaNecesaria)
-                            + " en la última nota para aprobar.");
+                            + " en cada nota faltante para aprobar.");
         }
+    }
+
+    // Funcionalidad extra
+    public static void contarAprobadas(double[] notas) {
+
+        int aprobadas = 0;
+        int reprobadas = 0;
+
+        for (int i = 0; i < notas.length; i++) {
+
+            if (notas[i] >= 3.0) {
+                aprobadas++;
+            } else {
+                reprobadas++;
+            }
+        }
+
+        JOptionPane.showMessageDialog(null,
+                "Notas aprobadas: " + aprobadas +
+                        "\nNotas reprobadas: " + reprobadas);
     }
 }
